@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  RESIDENT
+  ADMIN
+}
+
+enum ComplaintStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum ComplaintPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum NotificationType {
+  STATUS_UPDATE
+  IMPORTANT_NOTICE
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model User {
+  id             String   @id @default(uuid())
+  name           String
+  email          String   @unique
+  passwordHash   String
+  role           Role     @default(RESIDENT)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  complaints     Complaint[]        @relation("UserComplaints")
+  historyRecords ComplaintHistory[] @relation("ActorHistory")
+  notices        Notice[]           @relation("UserNotices")
+  notifications  Notification[]
+}
+
+model Complaint {
+  id          String            @id @default(uuid())
+  title       String?
+  category    String
+  description String
+  status      ComplaintStatus   @default(OPEN)
+  priority    ComplaintPriority @default(LOW)
+  imageUrl    String?
+
+  residentId  String
+  resident    User              @relation("UserComplaints", fields: [residentId], references: [id], onDelete: Restrict)
+
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  history       ComplaintHistory[]
+  notifications Notification[]
+
+  @@index([residentId])
+  @@index([status])
+  @@index([priority])
+  @@index([createdAt])
+}
+
+model ComplaintHistory {
+  id             String          @id @default(uuid())
+  previousStatus ComplaintStatus
+  newStatus      ComplaintStatus
+  note           String?
+  timestamp      DateTime        @default(now())
+
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Restrict)
+
+  actorId String
+  actor   User   @relation("ActorHistory", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([complaintId])
+  @@index([actorId])
+  @@index([timestamp])
+}
+
+model Notice {
+  id          String   @id @default(uuid())
+  title       String
+  content     String
+  isImportant Boolean  @default(false)
+
+  authorId String
+  author   User   @relation("UserNotices", fields: [authorId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isImportant])
+  @@index([createdAt])
+}
+
+model SystemConfig {
+  key         String   @id
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model Notification {
+  id           String             @id @default(uuid())
+  type         NotificationType
+  status       NotificationStatus @default(PENDING)
+  errorMessage String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  complaintId String?
+  complaint   Complaint? @relation(fields: [complaintId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  sentAt    DateTime?
+
+  @@index([userId])
+  @@index([status])
+}
