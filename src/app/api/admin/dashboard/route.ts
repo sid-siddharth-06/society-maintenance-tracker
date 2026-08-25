@@ -1,4 +1,3 @@
-import { NextRequest } from 'next/server';
 import { apiHandler, apiSuccess } from '../../../../lib/api-handler';
 import { requireRole } from '../../../../lib/auth';
 import { prisma } from '../../../../lib/prisma';
