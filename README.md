@@ -56,14 +56,12 @@ Public registration MUST create only a `RESIDENT` account. The client must not b
 
 Admin accounts cannot be created through the public registration page. The Admin role is provisioned through the database/seed/demo-account mechanism used by this project.
 
-For evaluation, provide the seeded Admin credentials:
-Email: `admin@example.com`
-Password: `password123`
+For evaluation, provide the seeded Demo credentials:
 
-### Demo Resident Account
-
-Email: `resident1@example.com`
-Password: `password123`
+| Role | Email | Password |
+|---|---|---|
+| **Admin** | `admin@example.com` | `password123` |
+| **Resident** | `resident1@example.com` | `password123` |
 
 > Public registration creates Resident accounts only. Users cannot register themselves as Admins. Admin authorization is enforced server-side using RBAC.
 
@@ -262,11 +260,10 @@ Evaluators can skip local deployment entirely and evaluate the live application.
 Hosted Application:
 https://society-maintenance-tracker-eta-five.vercel.app
 
-Admin:
-admin@example.com / password123
-
-Resident:
-resident1@example.com / password123
+| Role | Email | Password |
+|---|---|---|
+| **Admin** | `admin@example.com` | `password123` |
+| **Resident** | `resident1@example.com` | `password123` |
 
 ### Resident Evaluation
 
