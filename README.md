@@ -23,7 +23,7 @@ The Society Maintenance Tracker is a streamlined web application designed to bri
 **Authentication:** Auth.js (NextAuth) securely handling JWT session cookies.
 **Database ORM:** Prisma ORM with `@prisma/adapter-pg`.
 **Database:** Neon PostgreSQL.
-**Hosting:** Vercel (Serverless Edge Functions).
+**Hosting:** Vercel (Serverless runtime).
 
 **External Integrations:**
 - **Cloudinary:** Secure, server-side upload of complaint photos.
@@ -42,6 +42,55 @@ The Society Maintenance Tracker is a streamlined web application designed to bri
 - Resend (Email Delivery)
 - Vercel (Deployment)
 - Vitest (Unit Testing)
+
+## Account Creation and Roles
+
+### Resident Account
+
+Residents can create an account using:
+`/register`
+
+Public registration MUST create only a `RESIDENT` account. The client must not be able to select or submit `ADMIN` as a role. This is enforced server-side to prevent privilege escalation.
+
+### Admin Account
+
+Admin accounts cannot be created through the public registration page. The Admin role is provisioned through the database/seed/demo-account mechanism used by this project.
+
+For evaluation, provide the seeded Admin credentials:
+Email: `admin@example.com`
+Password: `password123`
+
+### Demo Resident Account
+
+Email: `resident1@example.com`
+Password: `password123`
+
+> Public registration creates Resident accounts only. Users cannot register themselves as Admins. Admin authorization is enforced server-side using RBAC.
+
+## Login Flow
+
+Both Admin and Resident users use the SAME login page:
+`/login`
+
+The user does not select Admin or Resident manually. Authentication works as:
+
+User enters email/password
+        ↓
+Auth.js verifies credentials
+        ↓
+Database user is identified
+        ↓
+Server-side role is read
+        ↓
+Role-based redirect
+
+ADMIN:
+→ `/admin/dashboard`
+
+RESIDENT:
+→ `/resident/complaints`
+
+> The same `/login` page is used for both roles. The application determines the user's role from the authenticated server-side session and redirects the user accordingly.
 
 ## User Roles
 **RESIDENT**
@@ -86,7 +135,7 @@ Service Level Agreement (SLA) logic flags complaints that have been neglected.
 
 ## Photo Upload
 - Photos are entirely optional during complaint creation.
-- The client passes a Base64 string to the server; the server handles the actual Cloudinary upload.
+- The client passes the photo using `multipart/form-data` to the server; the server handles the actual Cloudinary upload.
 - Cloudinary API credentials (`CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`) remain strictly on the server and are never exposed to the browser.
 - Once uploaded, Cloudinary returns a `secure_url` which is permanently stored in the `Complaint.imageUrl` database field.
 
@@ -179,6 +228,7 @@ EMAIL_FROM
    ```bash
    npx prisma db seed
    ```
+   *Note: A locally created Resident account can be created through `/register`. Admin accounts should be provisioned through the project's existing database/seed mechanism rather than public registration.*
 5. Start the development server:
    ```bash
    npm run dev
@@ -198,7 +248,7 @@ The application uses strict validation and testing:
 - **Build Validation:** `npx next build --webpack`
 
 ## Deployment
-The application is fully configured for Vercel edge deployment:
+The application is fully configured for Vercel serverless runtime deployment:
 - Vercel integrates directly with the GitHub repository.
 - Next.js compiles the server actions and API handlers.
 - The database connects via the native `@prisma/adapter-pg` driver.
@@ -209,15 +259,54 @@ The application is fully configured for Vercel edge deployment:
 ## Quick Evaluation
 Evaluators can skip local deployment entirely and evaluate the live application.
 
-**Hosted Application:** https://society-maintenance-tracker-eta-five.vercel.app
+Hosted Application:
+https://society-maintenance-tracker-eta-five.vercel.app
 
-**Admin Demo:**
-- Email: `admin@example.com`
-- Password: `password123`
+Admin:
+admin@example.com / password123
 
-**Resident Demo:**
-- Email: `resident1@example.com`
-- Password: `password123`
+Resident:
+resident1@example.com / password123
+
+### Resident Evaluation
+
+1. Open the hosted application.
+2. Click Login.
+3. Use:
+   Email: `resident1@example.com`
+   Password: `password123`
+4. Verify redirect to Resident Complaints.
+5. Create a complaint.
+6. Select a category.
+7. Enter a description.
+8. Optionally upload a photo.
+9. Submit the complaint.
+10. Open the complaint details.
+11. Verify complaint history.
+12. Open Notices.
+13. Verify notices.
+14. Logout.
+
+### Admin Evaluation
+
+1. Open the hosted application.
+2. Click Login.
+3. Use:
+   Email: `admin@example.com`
+   Password: `password123`
+4. Verify redirect to Admin Dashboard.
+5. Verify dashboard metrics.
+6. Open Complaints.
+7. Locate the resident complaint.
+8. Change priority.
+9. Change status from OPEN to IN_PROGRESS.
+10. Add an optional status note.
+11. Verify history.
+12. Open Notices.
+13. Create a notice.
+14. Mark it Important if desired.
+15. Verify the notice appears.
+16. Logout.
 
 ## Project Structure
 ```
